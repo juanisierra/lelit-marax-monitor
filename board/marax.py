@@ -85,7 +85,6 @@ class MaraxSensor(object):
     def _parse_common(self, output: dict, metrics: list[str]):
         output['firmare_version'] = metrics[0]
         output['boiler_temp'] = int(metrics[1])
-        output['boiler_target'] = int(metrics[2])
         output['hx_temp'] = int(metrics[3])
         output['countdown'] = int(metrics[4])
         output['heating_element_state'] = int(metrics[5])
@@ -95,6 +94,8 @@ class MaraxSensor(object):
         self._parse_common(result, metrics)
         modes = self.mode_map['v1']
         assert mode in modes,  "no such mode: {}".format(mode)
+        result['boiler_target'] = int(metrics[2])
+        result['missing_water'] = 1 if result['boiler_target'] == 0 else 0
         result['mode'] = modes[mode]
         return result
 
@@ -103,6 +104,16 @@ class MaraxSensor(object):
         self._parse_common(result, metrics)
         modes = self.mode_map['v2']
         result['mode'] = modes.get(mode, 'unknown: {}'.format(mode))
+
+        if not metrics[2][0].isdigit():
+            # A random error code is sent if the machine powers on an, and there is no water in the tank / water tank is missing.
+            # if during operation water tank get empty or taken out, nothing will happen.. weird.
+            result['boiler_target'] = 0
+            result['missing_water'] = 1
+        else:
+            result['boiler_target'] = int(metrics[2])
+            result['missing_water'] = 0
+
         # MaraX v2 gicar emits one more metric, currently unknown
         result['unknown'] = int(metrics[6])
         return result

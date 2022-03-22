@@ -72,7 +72,30 @@ def wait_for_activity():
         time.sleep_ms(1000)
 
 
-last_good_result = None
+last_valid_result = None
+
+def update_display(r: dict):
+    display.fill(0)
+    if r is None:
+        display.text("ERROR", 0, 0, 1)
+    elif r.get("missing_water", 0):
+        display.text("Refill water tank!", 0, 0, 1)
+    else:
+        display.text(r['mode'], 0, 0, 1)
+        display.text("HX: {}".format(r['hx_temp']), 0, 10, 1)
+        display.text(
+            "Boiler: {}/{}".format(r['boiler_temp'], r['boiler_target']), 0,
+            20, 1)
+        if shot_timer_elapsed is not None:
+            # also need to display the shot timer
+            display.text('TIMER: ' + str(shot_timer_elapsed) + 's', 0, 64 - 20,
+                        1)
+        if r['heating_element_state'] == True:
+            display.text("HEATING...", 0, 64 - 10, 1)
+
+        display.show()
+        last_display_update_ticks = time.ticks_ms()
+
 try:
     while True:
         pump.check()
@@ -102,49 +125,33 @@ try:
 
         try:
             r = marax.parse(line)
-            last_good_result = r
-        except:
-            print('parsing failure...')
-            r = last_good_result
+            last_valid_result = r
+        except Exception as e:
+            print('parsing failure for line: {}'.format(line))
+            import sys
+            sys.print_exception(e)
             if r is None:
                 continue
+            r = last_valid_result
         shot_timer_elapsed = pump.shot_timer_elapsed()
         # append the pump status to the resuly
         r["pump_on"] = shot_timer_elapsed is not None
 
         # publish to mqtt topic
-
         if mqtt is not None and time.ticks_ms() - last_update_ticks >= PUBLISH_INTERVAL_MS:
             print('publishing')
             mqtt.publish(MQTT_TOPIC_SENSOR, ujson.dumps(r))
             last_update_ticks = time.ticks_ms()
 
         if time.ticks_ms() - last_display_update_ticks >= DISPLAY_UPDATE_INTERVAL_MS:
-            # update the display
-            display.fill(0)
-            display.text(r['mode'], 0, 0, 1)
-            display.text("HX: {}".format(r['hx_temp']), 0, 10, 1)
-            display.text(
-                "Boiler: {}/{}".format(r['boiler_temp'], r['boiler_target']), 0,
-                20, 1)
-            if shot_timer_elapsed is not None:
-                # also need to display the shot timer
-                display.text('TIMER: ' + str(shot_timer_elapsed) + 's', 0, 64 - 20,
-                            1)
-            if r['heating_element_state'] == True:
-                display.text("HEATING...", 0, 64 - 10, 1)
+           update_display(r)
 
-            display.show()
-            last_display_update_ticks = time.ticks_ms()
 except Exception as e:
     display.fill(0)
     display.text("EXCEPTION!!!", 0, 10, 1)
     display.text(str(type(e).__name__), 0, 20, 1)
     display.show()
-    t = Timer(-1)
-
-    def bye_bye(t):
-        machine.reset()
-
-    t.init(mode=Timer.ONE_SHOT, period=10000, callback=bye_bye)
-    raise
+    import sys
+    while True:
+        sys.print_exception(e)
+        time.sleep_ms(1000)
