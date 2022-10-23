@@ -6,6 +6,12 @@ MARAX_TX = 13  # D7
 # set to True if you want to test it without connecting to the real MaraX
 MOCK_SETUP = False
 
+
+# If you have connected a reed switch to PIN0 of the board, and sticked it to the pump, set this to "reed"
+# Else, if you have the GicarV2, set this to "uart"
+# If none of the above is the case, leave empty,  or do not include this at all.
+SHOT_TIMER = ''
+
 # May use None here if you don't want mqtt
 MQTT_BROKER =bv''
 MQTT_USER = b''

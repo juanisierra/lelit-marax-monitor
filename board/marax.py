@@ -31,7 +31,7 @@ class MaraxSensor(object):
     _TIMEOUT = 5000
 
     def __init__(self):
-        self.last_line_time = time.ticks_ms()
+        self.last_line_time = None
 
     def connect(self):
         txpin = Pin(MARAX_TX)
@@ -66,7 +66,7 @@ class MaraxSensor(object):
             return None
 
     def is_offline(self):
-        return time.ticks_ms() - self.last_line_time > self._TIMEOUT
+        return self.last_line_time is None or time.ticks_ms() - self.last_line_time > self._TIMEOUT
 
     # See this post for differences between maraX V1 & V2:
     # https://coffeetime.freeflarum.com/d/417-lelit-mara-x-v1-and-v2-the-differences
@@ -114,8 +114,7 @@ class MaraxSensor(object):
             result['boiler_target'] = int(metrics[2])
             result['missing_water'] = 0
 
-        # MaraX v2 gicar emits one more metric, currently unknown
-        result['unknown'] = int(metrics[6])
+        result['pump_running'] = int(metrics[6])
         return result
 
     def parse(self, line):
