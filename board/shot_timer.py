@@ -8,7 +8,7 @@ except ImportError:
 
 
 class ShotTimerBase:
-    _GRACE_TIMEOUT_MS = 666
+    _GRACE_TIMEOUT_MS = 10000
 
     def __init__(self):
         self.start_time = None
@@ -16,8 +16,10 @@ class ShotTimerBase:
 
     @property
     def elapsed(self):
-        if self.start_time is not None:
+        if self.start_time is not None and self.stop_time is None:
             return (time.ticks_ms() - self.start_time) // 1000
+        elif self.start_time is not None and self.stop_time is not None:
+            return (self.stop_time - self.start_time) // 1000
         return None
 
     def start(self):
@@ -30,7 +32,7 @@ class ShotTimerBase:
         self.start_time = None
         self.stop_time = None
 
-    def check(self, marax_data: dict):
+    def check(self, marax_data: dict, mqtt, MQTT_TOPIC_SHOTS):
         pump_detected = self.detect_pump(marax_data)
 
         timer_started = self.start_time is not None
@@ -41,6 +43,9 @@ class ShotTimerBase:
             if self.stop_time is None:
                 self.stop_time = time.ticks_ms()
             elif time.ticks_ms() - self.stop_time > self._GRACE_TIMEOUT_MS:
+                if mqtt is not None:
+                    mqtt.publish(MQTT_TOPIC_SHOTS, str(self.elapsed))
+                    print('Published: {}s'.format(self.elapsed)) #Juani
                 self.stop()
         else:
             self.stop_time = None

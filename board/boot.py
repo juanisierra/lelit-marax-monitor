@@ -71,9 +71,11 @@ if MQTT_BROKER:
     else:
         MQTT_TOPIC_STATUS = b'marax/status'
         MQTT_TOPIC_SENSOR = b'marax/uart'
+        MQTT_TOPIC_SHOTS = b'marax/shots'
         if MOCK_SETUP:
             MQTT_TOPIC_SENSOR = b'mock_' + MQTT_TOPIC_SENSOR
             MQTT_TOPIC_STATUS = b'mock_' + MQTT_TOPIC_STATUS
+            MQTT_TOPIC_SHOTS = b'mock_' + MQTT_TOPIC_SHOTS
         client_id = ubinascii.hexlify(machine.unique_id())
         mqtt = MQTTClient(client_id,
                           MQTT_BROKER,

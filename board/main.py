@@ -110,7 +110,7 @@ try:
             import sys
             sys.print_exception(e)
             continue
-        shot_timer.check(r)
+        shot_timer.check(r, mqtt, MQTT_TOPIC_SHOTS)
         # append the pump status to the resuly
         r["shot"] = int(shot_timer.elapsed is not None)
         # publish to mqtt topic
