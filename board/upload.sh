@@ -12,7 +12,7 @@ if [ ! -f config.py ]; then
 fi
 
 
-AMPY="ampy --port $ESP_PORT --baud 115200"
+AMPY="esp32/bin/ampy --port $ESP_PORT --baud 115200"
 
 putfile () {
     local file=$1
@@ -25,3 +25,5 @@ putfile boot.py
 putfile main.py
 putfile marax.py
 putfile config.py
+putfile ssh1106.py
+putfile shot_timer.py

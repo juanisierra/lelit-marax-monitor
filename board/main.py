@@ -75,7 +75,8 @@ def machine_is_online(line: str) -> bool:
     else:
         if reported_offline is not None and reported_offline:
             reported_offline = None
-            mqtt.publish(MQTT_TOPIC_STATUS, 'online')
+            if mqtt is not None:
+                mqtt.publish(MQTT_TOPIC_STATUS, 'online')
             print('MaraX is online!')
             display.poweron()
             display.fill(0)
@@ -83,6 +84,7 @@ def machine_is_online(line: str) -> bool:
             display.show()
     return line is not None
 
+prev_line = None
 
 try:
     while True:
@@ -90,17 +92,27 @@ try:
         if not machine_is_online(line):
             continue
         try:
-            r = marax.parse(line)
+            print("Parsing line: {}".format(str(line))) # Juani
+            if prev_line is not None:
+                full_line = str(prev_line) + str(line)
+                print("PREVIOUS LINE NOT NONE, SENDING: {}".format(full_line)) # Juani
+            else:
+                full_line = str(line)
+            r = marax.parse(full_line)
             last_valid_result = r
+            print("Parsed succesfully line: {}".format(full_line)) # Juani
+            print("Data: {}".format(r)) # Juani
+            prev_line = None
         except Exception as e:
             print('parsing failure for line: {}'.format(line))
+            prev_line = str(line)
+            print('PREV LINE IS: {}'.format(prev_line))
             import sys
             sys.print_exception(e)
             continue
         shot_timer.check(r)
         # append the pump status to the resuly
         r["shot"] = int(shot_timer.elapsed is not None)
-
         # publish to mqtt topic
         if mqtt is not None and time.ticks_ms() - last_update_ticks >= PUBLISH_INTERVAL_MS:
             print('publishing')

@@ -10,7 +10,7 @@ import esp
 import ubinascii
 
 from machine import Pin, I2C
-import ssd1306
+from ssh1106 import SH1106_I2C
 
 esp.osdebug(None)
 import gc
@@ -18,8 +18,8 @@ import gc
 gc.collect()
 
 # using default address 0x3C
-i2c = I2C(sda=Pin(4), scl=Pin(5))
-display = ssd1306.SSD1306_I2C(128, 64, i2c)
+i2c = I2C(sda=Pin(21), scl=Pin(22))
+display = SH1106_I2C(128, 64, i2c)
 display.fill(0)
 display.text("Starting...", 0, 0, 1)
 display.show()
@@ -41,13 +41,13 @@ display.fill(0)
 display.text("Hello,", 0, 0, 1)
 display.text(WIFI_SSID, 0, 10, 1)
 display.text(ifconfig[0], 0, 20, 1)
-if WEBREPL_ENABLED:
-    import webrepl
-    port = WEBREPL_PORT or 8266
-    password = WEBREPL_PASSWORD or 'CHANGEME!'  # <----------- This is the default password, please change it!
-    webrepl.start(port=port, password=password)
-    display.text("WEBREPL: {}".format(port), 0, 30, 1)
-    display.text("PASS: {}".format(password), 0, 40, 1)
+# if WEBREPL_ENABLED:
+    # import webrepl_setup
+    # port = WEBREPL_PORT or 8266
+    # password = WEBREPL_PASSWORD or 'CHANGEME!'  # <----------- This is the default password, please change it!
+    # webrepl.start(port=port, password=password)
+    # display.text("WEBREPL: {}".format(port), 0, 30, 1)
+    # display.text("PASS: {}".format(password), 0, 40, 1)
 
 display.show()
 

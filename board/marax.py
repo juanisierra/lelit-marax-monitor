@@ -1,6 +1,6 @@
 import time
 from config import MARAX_TX, MARAX_RX, MOCK_SETUP
-from machine import Pin, SoftUART
+from machine import Pin, UART
 
 import select
 
@@ -37,7 +37,7 @@ class MaraxSensor(object):
         txpin = Pin(MARAX_TX)
         rxpin = Pin(MARAX_RX, Pin.IN, Pin.PULL_UP)
         print('setting up MaraX uart: TX={} RX={}'.format(txpin, rxpin))
-        self.uart = SoftUART(tx=Pin(MARAX_TX), rx=Pin(MARAX_RX), baudrate=9600)
+        self.uart = UART(1,tx=Pin(MARAX_TX), rx=Pin(MARAX_RX), baudrate=9600)
         poll.register(self.uart)
 
     def recv_line(self):
@@ -52,6 +52,7 @@ class MaraxSensor(object):
                 continue
             try:
                 line = line.decode('ascii')
+                print("GOT ---- line: {}\n".format(line)) #Juani
             except UnicodeError:
                 print('failed to decode line:')
                 print(line)
@@ -118,14 +119,14 @@ class MaraxSensor(object):
         return result
 
     def parse(self, line):
-        orig_line = line
+
         assert line is not None
         mode = line[0:1]
-
         metrics = line[1:].rstrip('\r\n').rstrip('\n').split(',')
-        if len(metrics) == 6:
+        
+        if  len(metrics) == 5 or len(metrics) == 6:
             return self._parse_v1(mode, metrics)
         elif len(metrics) == 7:
             return self._parse_v2(mode, metrics)
         else:
-            raise RuntimeError("unknown line: {}".format(orig_line))
+            raise RuntimeError("unknown line: {}".format(line))
